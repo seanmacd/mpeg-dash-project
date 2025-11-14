@@ -1,0 +1,10 @@
+html
+  head
+    title DASH.js Player
+  body
+    video(id='player' controls width='640')
+    script(src='https://cdn.dashjs.org/latest/dash.all.min.js')
+    script.
+      const url = 'http://localhost:3000/streams/kitten_video.mp4/manifest.mpd'
+      const player = dashjs.MediaPlayer().create()
+      player.initialize(document.querySelector('#player'), url, true)
