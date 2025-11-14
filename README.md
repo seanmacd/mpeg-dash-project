@@ -25,3 +25,9 @@ Run this cURL request from the directory with your file. Update the filename hea
 ```bash
 curl -X POST http://localhost:3000/upload -H "Content-Type: video/mp4" -H "X-Filename: filename.mp4" --data-binary "@filename.mp4"
 ```
+
+You can change line 8 in `views/index.pug` to see your video:
+
+```js
+const url = 'http://localhost:3000/streams/grass_kitten.mp4/manifest.mpd'
+```

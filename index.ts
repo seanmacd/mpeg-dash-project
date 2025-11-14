@@ -43,48 +43,7 @@ function main() {
 
 main()
 
-function fixAspectRatio(videoBuffer: Buffer): Promise<Buffer> {
-  const tempInputPath = path.join(STREAM_DIR, `temp_in_${Date.now()}.mp4`)
-  const tempOutputPath = path.join(STREAM_DIR, `temp_out_${Date.now()}.mp4`)
-
-  fs.writeFileSync(tempInputPath, videoBuffer)
-
-  return new Promise((resolve, reject) => {
-    console.log('Adding black borders to make video 16:9')
-    const proc = spawn('ffmpeg', [
-      '-i',
-      tempInputPath,
-      '-vf',
-      'pad=ceil(iw/2)*2:ceil(ih/2)*2:color=black,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2',
-      '-c:a',
-      'copy',
-      tempOutputPath
-    ])
-
-    proc.stderr.on('data', data => {
-      console.error(`[FFmpeg ERROR]: ${data}`)
-    })
-
-    proc.on('close', code => {
-      if (code === 0) {
-        console.log('Black borders added successfully')
-        const outputBuffer = fs.readFileSync(tempOutputPath)
-        fs.unlinkSync(tempInputPath)
-        fs.unlinkSync(tempOutputPath)
-        resolve(outputBuffer)
-      } else {
-        console.error(`FFmpeg process exited with code ${code}`)
-        fs.unlinkSync(tempInputPath)
-        if (fs.existsSync(tempOutputPath)) {
-          fs.unlinkSync(tempOutputPath)
-        }
-        reject(new Error('Failed to add black borders'))
-      }
-    })
-  })
-}
-
-async function processFile(fileName: string, data: Buffer) {
+function processFile(fileName: string, data: Buffer) {
   const outputDir = path.join(STREAM_DIR, fileName)
 
   if (!fs.existsSync(outputDir)) {
@@ -92,7 +51,7 @@ async function processFile(fileName: string, data: Buffer) {
   }
 
   const videoPath = path.join(outputDir, fileName)
-  fs.writeFileSync(videoPath, await fixAspectRatio(data))
+  fs.writeFileSync(videoPath, data)
 
   // manifest file lists all the vidoe segements for a DASH
   const manifestPath = path.join(outputDir, 'manifest.mpd')
@@ -101,20 +60,16 @@ async function processFile(fileName: string, data: Buffer) {
     console.log('Running FFmpeg')
     const proc = spawn('ffmpeg', ffmpegArgs(videoPath, manifestPath))
 
-    proc.stdout.on('data', data => {
-      console.log(`[FFmpeg INFO]: ${data}`)
-    })
-
-    proc.stderr.on('data', data => {
-      console.error(`[FFmpeg ERROR]: ${data}`)
-    })
+    const logger = (data: string) => console.log(`[FFmpeg]: ${data}`)
+    proc.stdout.on('data', logger)
+    proc.stderr.on('data', logger)
 
     proc.on('close', code => {
       if (code === 0) {
-        console.log('FFmpeg process completed')
+        console.log('[FFmpeg] Process completed successfully')
         resolve()
       } else {
-        console.error(`FFmpeg process exited with code ${code}`)
+        console.error(`[FFmpeg] Process exited with error code ${code}`)
         reject()
       }
     })
