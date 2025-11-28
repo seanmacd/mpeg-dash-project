@@ -1,7 +1,11 @@
+import 'dotenv/config'
+
 import {spawn} from 'child_process'
+import cors from 'cors'
 import express from 'express'
 import fs from 'fs'
 import path from 'path'
+
 import {ffmpegArgs} from './ffmpeg'
 
 const STREAM_DIR = './streams'
@@ -9,7 +13,9 @@ const STREAM_DIR = './streams'
 function main() {
   const app = express()
 
-  app.set('view engine', 'pug')
+  if (process.env.ORIGIN) {
+    app.use(cors({origin: process.env.ORIGIN}))
+  }
 
   if (!fs.existsSync(STREAM_DIR)) {
     fs.mkdirSync(STREAM_DIR, {recursive: true})
@@ -18,7 +24,15 @@ function main() {
   app.use('/streams', express.static(STREAM_DIR))
 
   app.get('/', (_, res) => {
-    return res.render('index')
+    return res.json({status: 'ok'})
+  })
+
+  app.get('/list', async (_req, res) => {
+    const streams = fs
+      .readdirSync(STREAM_DIR, {withFileTypes: true})
+      .filter(f => !f.isFile()) // directories only
+      .map(f => f.name)
+    return res.json({streams})
   })
 
   app.post('/upload', express.raw({type: 'video/*', limit: '5gb'}), async (req, res) => {
