@@ -11,7 +11,7 @@ import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={{defaultRadius: 'md'}} defaultColorScheme="light">
+    <MantineProvider theme={{defaultRadius: 'md'}} defaultColorScheme="auto">
       <Notifications />
       <App />
     </MantineProvider>

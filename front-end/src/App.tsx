@@ -9,6 +9,7 @@ import {MonitorArrowUpIcon} from '@phosphor-icons/react'
 import {useRef, useState} from 'react'
 import useSWR from 'swr'
 import {api} from './api'
+import {ColorSchemeToggle} from './ColorSchemeToggle'
 import {CreateStreamModal} from './CreateStream.modal'
 import {formatBitrate} from './format-bitrate'
 import {useDashMetrics} from './use-dash-metrics'
@@ -39,9 +40,12 @@ export function App() {
     <Box p="md" mb={100}>
       <Group align="flex-start">
         <Box maw={300}>
-          <Title order={3} mb="xs">
-            MPEG-DASH Streaming
-          </Title>
+          <Group align="baseline">
+            <ColorSchemeToggle />
+            <Title order={3} mb="xs">
+              MPEG-DASH Streaming
+            </Title>
+          </Group>
           <Text size="sm">
             This project uses MPEG-DASH and Dash.js to explore streaming in the context of network programming.
           </Text>
