@@ -60,7 +60,7 @@ export function CreateStreamModal(props: ModalProps) {
 
         if (status !== 'Pending') {
           clearInterval(interval)
-          mutate('/list') // refresh the stream list
+          mutate('list') // refresh the stream list
 
           if (status === 'Complete') {
             notifications.update({
@@ -95,8 +95,13 @@ export function CreateStreamModal(props: ModalProps) {
     }
   }
 
+  const onClose = () => {
+    props.onClose()
+    form.reset()
+  }
+
   return (
-    <Modal title="Create new stream" closeOnClickOutside={false} closeOnEscape={false} {...props}>
+    <Modal title="Create new stream" closeOnClickOutside={false} closeOnEscape={false} {...props} onClose={onClose}>
       <form onSubmit={form.onSubmit(onSubmit)}>
         <TextInput
           label="Stream name"
@@ -121,6 +126,9 @@ export function CreateStreamModal(props: ModalProps) {
           </Text>
         )}
         <Group justify="flex-end" mt="lg">
+          <Button variant="default" onClick={onClose}>
+            Cancel
+          </Button>
           <Button type="submit" loading={loading}>
             Create stream
           </Button>

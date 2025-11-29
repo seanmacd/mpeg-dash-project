@@ -40,8 +40,6 @@ encoderEvents.on('failed', jobId => {
 })
 
 router.post('/encode', async (req, res) => {
-  console.log(req.body)
-  console.log(req.files)
   const schema = z.looseObject({
     body: z.object({
       name: z.string()

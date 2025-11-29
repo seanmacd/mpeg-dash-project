@@ -1,3 +1,20 @@
+import {execSync} from 'child_process'
+
+/**
+ * Check if a video file has an audio stream
+ */
+const hasAudio = (videoPath: string): boolean => {
+  try {
+    const ffprobeOutput = execSync(
+      `ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 "${videoPath}"`,
+      {encoding: 'utf8'}
+    )
+    return ffprobeOutput.trim().length > 0
+  } catch (e) {
+    return false
+  }
+}
+
 type Rendition = {
   w: number
   h: number
@@ -16,23 +33,31 @@ const RENDITIONS: Rendition[] = [
   {w: 1920, h: 1080, br: '5300k'} //1080p
 ]
 
+/**
+ * Generate ffmpeg args for dash encoding
+ */
 export const ffmpegArgs = (videoPath: string, manifestPath: string) => {
-  const filterComplexParts: string[] = []
+  const filterComplexes: string[] = []
   const mapArgs: string[] = []
 
   RENDITIONS.forEach(({w, h, br}, i) => {
-    filterComplexParts.push(
+    filterComplexes.push(
       `[0:v]scale=w=${w}:h=${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2[v${i}]`
     )
     mapArgs.push('-map', `[v${i}]`, '-b:v:' + i, br, '-c:v:' + i, 'libx264')
   })
+
+  const adaptationSets = [`id=0,streams=${RENDITIONS.map((_, i) => i).join(',')}`]
+  if (hasAudio(videoPath)) {
+    adaptationSets.push(`id=1,streams=${RENDITIONS.length}`)
+  }
 
   const args: string[] = [
     '-y',
     '-i',
     videoPath,
     '-filter_complex',
-    filterComplexParts.join(';'),
+    filterComplexes.join(';'),
     ...mapArgs,
     '-map',
     '0:a?',
@@ -53,7 +78,7 @@ export const ffmpegArgs = (videoPath: string, manifestPath: string) => {
     '-media_seg_name',
     'chunk_$RepresentationID$_$Number$.m4s',
     '-adaptation_sets',
-    `id=0,streams=${RENDITIONS.map((_, i) => i).join(',')} id=1,streams=${RENDITIONS.length}`,
+    adaptationSets.join(' '),
     manifestPath
   ]
 
