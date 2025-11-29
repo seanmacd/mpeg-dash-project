@@ -125,20 +125,20 @@ function Metrics({playerRef}: {playerRef: RefObject<MediaPlayerClass | null>}) {
     <Table variant="vertical" withTableBorder>
       <Table.Tbody>
         <Table.Tr>
-          <Table.Th w={150}>Throughput</Table.Th>
+          <Table.Th w={150}>Avg. Throughput</Table.Th>
           <Table.Td>{formatBitrate(throughput)}</Table.Td>
         </Table.Tr>
         <Table.Tr>
-          <Table.Th>Latency</Table.Th>
+          <Table.Th>Avg. Latency</Table.Th>
           <Table.Td>{latency}ms</Table.Td>
         </Table.Tr>
         <Table.Tr>
-          <Table.Th>Dropped frames</Table.Th>
+          <Table.Th>Dropped Frames</Table.Th>
           <Table.Td>{droppedFrames}</Table.Td>
         </Table.Tr>
         <Table.Tr>
-          <Table.Th>Buffer level</Table.Th>
-          <Table.Td>{bufferLevel}s</Table.Td>
+          <Table.Th>Buffer Level</Table.Th>
+          <Table.Td>{bufferLevel || 0}s</Table.Td>
         </Table.Tr>
       </Table.Tbody>
     </Table>
