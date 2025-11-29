@@ -10,8 +10,6 @@ import {encodeFile, encoderEvents} from './encoder'
 
 export const router = Router()
 
-router.get('/', (_, res) => res.json({status: 'ok'}))
-
 router.get('/list', async (_req, res) => {
   const streams = fs
     .readdirSync(STREAM_DIR, {withFileTypes: true})
