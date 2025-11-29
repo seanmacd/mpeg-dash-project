@@ -1,4 +1,9 @@
-import {Box, Button, Group, Select, Table, Text, Title, type SelectProps} from '@mantine/core'
+import type {SelectProps} from '@mantine/core'
+import type {MediaPlayerClass} from 'dashjs'
+import type {RefObject} from 'react'
+import type {Quality} from './use-dash-player'
+
+import {Box, Button, Group, Select, Table, Text, Title} from '@mantine/core'
 import {useDisclosure} from '@mantine/hooks'
 import {MonitorArrowUpIcon} from '@phosphor-icons/react'
 import {useRef, useState} from 'react'
@@ -6,14 +11,15 @@ import useSWR from 'swr'
 import {api} from './api'
 import {CreateStreamModal} from './CreateStream.modal'
 import {formatBitrate} from './format-bitrate'
-import {ABR_AUTO_ID, useDashPlayer, type Quality} from './use-dash-player'
+import {useDashMetrics} from './use-dash-metrics'
+import {ABR_AUTO_ID, useDashPlayer} from './use-dash-player'
 
 export function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const [stream, setStream] = useState<string | null>(null)
 
-  const {qualities, currentQuality, changeQuality} = useDashPlayer(videoRef, {stream})
+  const {playerRef, qualities, currentQuality, changeQuality} = useDashPlayer(videoRef, {stream})
 
   const qualityOptions = qualities.map(q => ({
     label: `${q.id}: ${q.width}x${q.height} ${formatBitrate(q.bitrate)}`,
@@ -47,10 +53,16 @@ export function App() {
             <StreamSelect value={stream} onChange={setStream} withAsterisk mb="xs" />
             <Select data={options} label="Quality" value={quality} onChange={onChange} allowDeselect={false} />
           </Box>
+
           <Text fw="bold" mb="xs">
             Current Quality
           </Text>
           <QualityInfo quality={currentQuality} />
+
+          <Text fw="bold" mb="xs" mt="md">
+            Metrics
+          </Text>
+          <Metrics playerRef={playerRef} />
         </Box>
 
         <Box flex={1}>
@@ -86,7 +98,7 @@ function QualityInfo({quality}: {quality: Quality | null}) {
     <Table variant="vertical" withTableBorder>
       <Table.Tbody>
         <Table.Tr>
-          <Table.Th w={120}>ID</Table.Th>
+          <Table.Th w={150}>ID</Table.Th>
           <Table.Td>{id}</Table.Td>
         </Table.Tr>
         <Table.Tr>
@@ -96,6 +108,37 @@ function QualityInfo({quality}: {quality: Quality | null}) {
         <Table.Tr>
           <Table.Th>Bitrate</Table.Th>
           <Table.Td>{formatBitrate(bitrate)}</Table.Td>
+        </Table.Tr>
+      </Table.Tbody>
+    </Table>
+  )
+}
+
+function Metrics({playerRef}: {playerRef: RefObject<MediaPlayerClass | null>}) {
+  const {throughput, latency, droppedFrames, bufferLevel} = useDashMetrics(playerRef)
+
+  if (!playerRef.current) {
+    return <Text c="dimmed">No data</Text>
+  }
+
+  return (
+    <Table variant="vertical" withTableBorder>
+      <Table.Tbody>
+        <Table.Tr>
+          <Table.Th w={150}>Throughput</Table.Th>
+          <Table.Td>{formatBitrate(throughput)}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Latency</Table.Th>
+          <Table.Td>{latency}ms</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Dropped frames</Table.Th>
+          <Table.Td>{droppedFrames}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Buffer level</Table.Th>
+          <Table.Td>{bufferLevel}s</Table.Td>
         </Table.Tr>
       </Table.Tbody>
     </Table>

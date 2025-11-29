@@ -53,12 +53,14 @@ export const useDashPlayer = (ref: RefObject<HTMLVideoElement | null>, opts: Use
     playerRef.current = player
 
     return () => {
-      player.reset()
+      playerRef.current?.reset()
     }
   }, [ref, stream])
 
   const changeQuality = (selectedId: string) => {
-    if (!playerRef.current) return
+    if (!playerRef.current) {
+      return
+    }
 
     if (selectedId === ABR_AUTO_ID) {
       toggleAbr(playerRef.current, true)
