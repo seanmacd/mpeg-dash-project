@@ -52,7 +52,6 @@ export const ffmpegArgs = (videoPath: string, manifestPath: string) => {
     'init_$RepresentationID$.mp4',
     '-media_seg_name',
     'chunk_$RepresentationID$_$Number$.m4s',
-    // **Here is the key line: put all video streams in one AdaptationSet**
     '-adaptation_sets',
     `id=0,streams=${RENDITIONS.map((_, i) => i).join(',')} id=1,streams=${RENDITIONS.length}`,
     manifestPath

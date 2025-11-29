@@ -1,22 +1,10 @@
-import {
-  Box,
-  Button,
-  FileInput,
-  Group,
-  Modal,
-  Progress,
-  Select,
-  Table,
-  Text,
-  TextInput,
-  Title,
-  type ModalProps,
-  type SelectProps
-} from '@mantine/core'
-import {isNotEmpty, useForm} from '@mantine/form'
-import {useDisclosure, useFetch} from '@mantine/hooks'
+import {Box, Button, Group, Select, Table, Text, Title, type SelectProps} from '@mantine/core'
+import {useDisclosure} from '@mantine/hooks'
 import {MonitorArrowUpIcon} from '@phosphor-icons/react'
-import {useEffect, useRef, useState} from 'react'
+import {useRef, useState} from 'react'
+import useSWR from 'swr'
+import {api} from './api'
+import {CreateStreamModal} from './CreateStream.modal'
 import {formatBitrate} from './format-bitrate'
 import {ABR_AUTO_ID, useDashPlayer, type Quality} from './use-dash-player'
 
@@ -76,17 +64,10 @@ export function App() {
   )
 }
 
-const streamEvents = new EventTarget()
-
 function StreamSelect(props: SelectProps) {
-  const {data, loading, refetch} = useFetch<{streams: string[]}>(`${window.env.API_URL}/list`)
+  const {data, isLoading} = useSWR<{streams: string[]}>('list', api)
 
-  useEffect(() => {
-    streamEvents.addEventListener('streamAdded', refetch)
-    return () => streamEvents.removeEventListener('streamAdded', refetch)
-  }, [])
-
-  if (!data || loading) {
+  if (!data || isLoading) {
     return <Select label="Stream" placeholder="Loading..." disabled />
   }
 
@@ -118,89 +99,5 @@ function QualityInfo({quality}: {quality: Quality | null}) {
         </Table.Tr>
       </Table.Tbody>
     </Table>
-  )
-}
-
-type CreateStreamForm = {
-  name: string
-  file: File | null
-}
-
-function CreateStreamModal(props: ModalProps) {
-  const form = useForm<CreateStreamForm>({
-    mode: 'uncontrolled',
-    initialValues: {
-      name: '',
-      file: null
-    },
-    validate: {
-      name: isNotEmpty('Enter a name for this stream'),
-      file: isNotEmpty('Upload a video file for this stream')
-    }
-  })
-
-  const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
-
-  const onSubmit = async (values: typeof form.values) => {
-    const {name, file} = values
-
-    if (!file) {
-      return
-    }
-
-    setLoading(true)
-    try {
-      await fetch(`${window.env.API_URL}/upload`, {
-        method: 'POST',
-        headers: {'content-type': file.type, 'x-filename': name},
-        body: file
-      })
-      form.reset()
-      props.onClose()
-      streamEvents.dispatchEvent(new Event('streamAdded'))
-    } catch {
-      setFailed(true)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Modal title="Create new stream" closeOnClickOutside={false} closeOnEscape={false} {...props}>
-      {!loading ? (
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <TextInput
-            label="Stream name"
-            placeholder="My cool stream"
-            key={form.key('name')}
-            {...form.getInputProps('name')}
-            withAsterisk
-            mb="xs"
-          />
-          <FileInput
-            label="Video file"
-            placeholder="Upload a video file"
-            accept="video/*"
-            key={form.key('file')}
-            {...form.getInputProps('file')}
-            withAsterisk
-          />
-          {failed && (
-            <Text mt="lg" c="red">
-              An error occurred while processing your stream. Please try again.
-            </Text>
-          )}
-          <Group justify="flex-end" mt="lg">
-            <Button type="submit">Create stream</Button>
-          </Group>
-        </form>
-      ) : (
-        <div>
-          <Text mb="md">Your stream is being processed...</Text>
-          <Progress h="md" value={100} animated mb="md" />
-        </div>
-      )}
-    </Modal>
   )
 }
