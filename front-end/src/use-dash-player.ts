@@ -37,7 +37,7 @@ export const useDashPlayer = (ref: RefObject<HTMLVideoElement | null>, opts: Use
     }
 
     const player = MediaPlayer().create()
-    player.initialize(ref.current, `${window.env.API_URL}/streams/${stream}/manifest.mpd`, true)
+    player.initialize(ref.current, `${window.env?.API_URL ?? ''}/streams/${stream}/manifest.mpd`, true)
     toggleAbr(player, true)
 
     player.on(MediaPlayer.events.STREAM_INITIALIZED, () => {
